@@ -85,7 +85,7 @@ def filter_by_tpm(bracer_outdir):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--barcer_outdir", help='bracer summarize output dir', required=True)
+    parser.add_argument("--bracer_outdir", help='bracer summarize output dir', required=True)
     args = parser.parse_args()
     filter_by_tpm(args.bracer_outdir)
 
