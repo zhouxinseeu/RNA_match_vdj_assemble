@@ -60,27 +60,47 @@ def filter_by_tpm(bracer_outdir):
     paired_cell = paired_cell[paired_cell['CELL'] == 2]
     paired_k = 0
     paired_l = 0
+
+    clones = pd.DataFrame()
+    clones['cell'] = list(paired_cell.index)
+    aaseqs = []
+
     for cell in list(paired_cell.index):
         if 'K' in list(filtered[filtered['CELL'] == cell]['LOCUS']):
             paired_k += 1
         elif 'L' in list(filtered[filtered['CELL'] == cell]['LOCUS']):
             paired_l += 1
+        tep = filtered[filtered['CELL'] == cell]
+        tep_loci = list(tep['LOCUS'])
+        cdr3 = list(tep['CDR3'])
+        aaseq = []
+        for seq in cdr3:
+            seq = translate_frameshifted(seq)
+            aaseq.append(seq)
+        string = 'IG{}:{}\nIG{}:{}'.format(tep_loci[0], aaseq[0], tep_loci[1], aaseq[1])
+        aaseqs.append(string)
+
     stat_string_2 = "Paired HK productive reconstruction:\t{}\nPaired HL productive reconstruction:\t{}\n".format(
         paired_k, paired_l
     )
-    clones = pd.DataFrame(filtered['CLONE'].value_counts())
-    clones.columns = ['clone_count']
-    aaseq = []
-    for clone in list(clones.index):
-        sequence = str(filtered[filtered['CLONE'] == str(clone)].head(1)['CDR3'])
-        aa = translate_frameshifted(sequence)
-        aaseq.append(aa)
 
-    clones['aaseq'] = aaseq
-    clones.to_csv(f'{bracer_outdir}/filtered_BCR_summary/clone_count.tsv', sep='\t')
-    with open(f'{bracer_outdir}/filtered_BCR_summary/stat.txt', 'a') as s:
+    with open(f'{bracer_outdir}/filtered_BCR_summary/stat.txt', 'w') as s:
         s.write(stat_string_1)
         s.write(stat_string_2)
+
+
+    clones["aaseq"] = aaseqs
+    clone_count = pd.DataFrame(clones['aaseq'].value_counts())
+    clone_count.columns = ["frequency"]
+    proportation = []
+    sum = clone_count['frequency'].sum()
+    for f in list(clone_count['frequency']):
+        p = f/sum
+        proportation.append(p)
+    clone_count['proportation'] = proportation
+    clone_count = clone_count.reset_index()
+    clone_count.rename(columns={'index':'aaseq'}, inplace=True)
+    clone_count.to_csv(f'{bracer_outdir}/filtered_BCR_summary/clone_count.tsv', sep='\t')
 
 
 def main():
