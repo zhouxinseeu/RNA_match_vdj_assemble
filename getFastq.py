@@ -21,24 +21,29 @@ def get_fastq_to_assemble(fqfile, fastq_dir, reversed, bclist=None, topn=None):
     if bclist and bclist != 'None':  # if bclist provided, compared with fqfile barcode and get intersection
         with open(bclist, 'r') as bclist:
             barcodes_from_matchfile = list(bclist)
+            barcodes_for_match = []
             if reversed == 'True':  # whether reversed?
                 for barcode in barcodes_from_matchfile:
                     barcode = barcode.strip('\n')
                     barcode = Seq(barcode)
                     barcode = barcode.reverse_complement()
+                    barcodes_for_match.append(barcode)
             elif reversed == 'False':
                 for barcode in barcodes_from_matchfile:
                     barcode = barcode.strip('\n')
-            barcodes_to_use = [barcode for barcode in barcodes_from_matchfile if barcode in all_barcodes]
+                    barcodes_for_match.append(barcode)
+            barcodes_to_use = [barcode for barcode in barcodes_for_match if barcode in all_barcodes]
             # barcodes in both RNA data and BCR data
 
             if topn and topn != 'None':  # if topn provided, copmared with length of barcode_to_use
                 topn = int(topn)
                 if topn < len(barcodes_to_use):
                     reads_count_dict_to_sort = {barcode: reads_count_dict[barcode] for barcode in barcodes_to_use}
-                    reads_count_dict_to_sort = sorted(reads_count_dict_to_sort.items(), key=lambda item: item[1], reverse=True)
+                    reads_count_dict_to_sort = sorted(reads_count_dict_to_sort.items(), key=lambda item: item[1],
+                                                      reverse=True)
                     barcode_useful = reads_count_dict_to_sort[:topn]
-                    barcode_reads_useful = {i[0]: barcode_reads_dict[i[0]] for i in barcode_useful}  # matched barcodes and reads
+                    barcode_reads_useful = {i[0]: barcode_reads_dict[i[0]] for i in barcode_useful}
+                    # matched barcodes and reads
                 else:
                     barcode_reads_useful = {barcode: barcode_reads_dict[barcode] for barcode in barcodes_to_use}
             else:
@@ -57,8 +62,10 @@ def get_fastq_to_assemble(fqfile, fastq_dir, reversed, bclist=None, topn=None):
 
     if not os.path.exists(fastq_dir):
         os.mkdir(fastq_dir)
+    i = 1
     for barcode in list(barcode_reads_useful.keys()):
-        fastq_file = f'{fastq_dir}/{barcode}.fq'
+        fastq_file = f'{fastq_dir}/{i}.fq'
         with open(fastq_file, 'w') as f:
             for entry in barcode_reads_useful[barcode]:
                 f.write(str(entry) + '\n')
+        i += 1
