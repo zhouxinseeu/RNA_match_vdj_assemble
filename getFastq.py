@@ -1,8 +1,9 @@
 import pysam
-import pandas as pd
 from collections import defaultdict
 import os
 from Bio.Seq import Seq
+import argparse
+import datetime
 
 
 def get_fastq_to_assemble(fqfile, fastq_dir, reversed, bclist=None, topn=None):
@@ -69,3 +70,23 @@ def get_fastq_to_assemble(fqfile, fastq_dir, reversed, bclist=None, topn=None):
             for entry in barcode_reads_useful[barcode]:
                 f.write(str(entry) + '\n')
         i += 1
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--fqfile', help='BCR fastq file', required=True)
+    parser.add_argument('--fastq_dir', help='single cell fastq dir', required=True)
+    parser.add_argument('--reversed', help='whether barcode in BCR reversed and complement',
+                        choices=['True', 'False'], default='True')
+    parser.add_argument('--bclist', help='barcode list to match', default='None')
+    parser.add_argument('--topn', help='select topn cells to assemble', default='None')
+    args = parser.parse_args()
+    start_time = datetime.datetime.now()
+    get_fastq_to_assemble(args.fqfile, args.fastq_dir, args.reversed, args.bclist, args.topn)
+    end_time = datetime.datetime.now()
+    time_report = 'generate_fq_file--start_at_{}--end_at_{}'.format(start_time, end_time)
+    return time_report
+
+
+if __name__ == "__main__":
+    main()
