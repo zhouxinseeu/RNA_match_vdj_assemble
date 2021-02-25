@@ -85,7 +85,7 @@ def main():
     get_fastq_to_assemble(args.fqfile, args.fastq_dir, args.reversed, args.bclist, args.topn)
     end_time = datetime.datetime.now()
     time_report = 'generate_fq_file--start_at_{}--end_at_{}'.format(start_time, end_time)
-    return time_report
+    print(time_report)
 
 
 if __name__ == "__main__":
