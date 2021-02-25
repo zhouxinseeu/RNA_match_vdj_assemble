@@ -20,8 +20,8 @@ BRACER_CONF = '/SGRNJ03/randd/zhouxin/software/bracer/bracer.conf'
 
 
 @log
-def bracer_summarise(outdir):
-    bracer_outdir = f'{outdir}/bracer'
+def bracer_summarise(outdir, sample):
+    bracer_outdir = f'{outdir}/{sample}/bracer'
     cmd = (
         f'source activate {BRACER_CONDA}; '
         f'{BRACER_PATH} summarise '
@@ -32,7 +32,7 @@ def bracer_summarise(outdir):
     os.system(cmd)
 
 
-def bracer(fq, outdir, species):
+def bracer(fq, outdir, species, sample):
     prefix = os.path.basename(fq).strip('.fq')
     cmd = (
         f'source activate {BRACER_CONDA}; '
@@ -43,14 +43,14 @@ def bracer(fq, outdir, species):
         f'--species {species} '
         f'-c {BRACER_CONF} '
         f'{prefix} '
-        f'{outdir}/bracer '
+        f'{outdir}/{sample}/bracer '
         f'{fq} '
     )
     os.system(cmd)
 
 
-def tracer_summarise(outdir):
-    tracer_outdir = f'{outdir}/tracer'
+def tracer_summarise(outdir, sample):
+    tracer_outdir = f'{outdir}/{sample}/tracer'
     cmd = (
         f'source activate {CONDA_SUB}; '
         f'{TRACER_PATH} summarise '
@@ -61,7 +61,7 @@ def tracer_summarise(outdir):
     os.system(cmd)
 
 
-def tracer(fq, outdir, species):
+def tracer(fq, outdir, species, sample):
     prefix = os.path.basename(fq).strip('.fq')
     cmd = (
         f'source activate {CONDA}; '
@@ -73,7 +73,7 @@ def tracer(fq, outdir, species):
         f'-c {CONF_PATH} '
         f'{fq} '
         f'{prefix} '
-        f'{outdir}/tracer '
+        f'{outdir}/{sample}/tracer '
     )
     os.system(cmd)
 
@@ -83,12 +83,13 @@ def run_tracer(sample, outdir, fastq_dir, species, thread):
     fqs = [join(fastq_dir, f) for f in listdir(fastq_dir) if isfile(join(fastq_dir, f))]
     outdirs = [outdir] * len(fqs)
     species = [species] * len(fqs)
+    samples = [sample] * len(fqs)
     if not os.path.exists(f'{outdir}/{sample}/tracer'):
         os.makedirs(f'{outdir}/{sample}/tracer')
 
     all_res = []
     with ProcessPoolExecutor(thread) as pool:
-        for res in pool.map(tracer, fqs, outdirs, species):
+        for res in pool.map(tracer, fqs, outdirs, species, samples):
             all_res.append(res)
 
     tracer_summarise(outdir)
@@ -98,12 +99,13 @@ def run_bracer(sample, outdir, fastq_dir, species, thread):
     fqs = [join(fastq_dir, f) for f in listdir(fastq_dir) if isfile(join(fastq_dir, f))]
     outdirs = [outdir] * len(fqs)
     species = [species] * len(fqs)
+    samples = [sample] * len(fqs)
     if not os.path.exists(f'{outdir}/{sample}/bracer'):
         os.makedirs(f'{outdir}/{sample}/bracer')
 
     all_res = []
     with ProcessPoolExecutor(thread) as pool:
-        for res in pool.map(bracer, fqs, outdirs, species):
+        for res in pool.map(bracer, fqs, outdirs, species, samples):
             all_res.append(res)
 
     bracer_summarise(outdir)
@@ -125,7 +127,7 @@ def main():
         run_bracer(args.sample, args.outdir, args.fastq_dir, args.species, int(args.thread))
     end_time = datetime.datetime.now()
     time_report = 'assemble--start_at_{}--end_at_{}'.format(start_time, end_time)
-    return time_report
+    print(time_report)
 
 
 if __name__ == "__main__":
