@@ -92,7 +92,7 @@ def run_tracer(sample, outdir, fastq_dir, species, thread):
         for res in pool.map(tracer, fqs, outdirs, species, samples):
             all_res.append(res)
 
-    tracer_summarise(outdir)
+    tracer_summarise(outdir, sample)
 
 
 def run_bracer(sample, outdir, fastq_dir, species, thread):
@@ -108,7 +108,7 @@ def run_bracer(sample, outdir, fastq_dir, species, thread):
         for res in pool.map(bracer, fqs, outdirs, species, samples):
             all_res.append(res)
 
-    bracer_summarise(outdir)
+    bracer_summarise(outdir, sample)
 
 
 def main():
