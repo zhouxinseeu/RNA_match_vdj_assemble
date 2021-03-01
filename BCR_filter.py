@@ -3,7 +3,7 @@ import argparse
 from Bio.Seq import Seq
 
 
-def filter_by_tpm(bracer_outdir):
+def filter_by_tpm(bracer_outdir, match_dir):
     data = pd.read_csv(f'{bracer_outdir}/filtered_BCR_summary/changeodb.tab', sep='\t')
     data = data[data['FUNCTIONAL'] == True]
     cell_name = set(list(data['CELL']))
@@ -34,38 +34,45 @@ def filter_by_tpm(bracer_outdir):
         filtered_h_count, filtered_k_count, filtered_l_count)
 
     paired_cell = pd.DataFrame(filtered['CELL'].value_counts())
+    unpaired_cell = paired_cell[paired_cell['CELL'] == 1]
     paired_cell = paired_cell[paired_cell['CELL'] == 2]
     paired_k = 0
     paired_l = 0
 
     clones = pd.DataFrame()
-    clones['cell'] = list(paired_cell.index)
+    cells = list(paired_cell.index)
     aaseqs = []
 
-    for cell in list(paired_cell.index):
+    for cell in cells:
         if 'K' in list(filtered[filtered['CELL'] == cell]['LOCUS']):
             paired_k += 1
         elif 'L' in list(filtered[filtered['CELL'] == cell]['LOCUS']):
             paired_l += 1
         tep = filtered[filtered['CELL'] == cell]
         tep_loci = list(tep['LOCUS'])
-        cdr3 = list(tep['CDR3'])
+        cdr3 = list(tep['JUNCTION'])
         aaseq = []
         for seq in cdr3:
             seq = Seq(seq)
             seq = seq.translate()
             aaseq.append(seq)
-        string = 'IG{}:{}\nIG{}:{}'.format(tep_loci[0], aaseq[0], tep_loci[1], aaseq[1])
+        string = 'IG{}:{};IG{}:{}'.format(tep_loci[0], aaseq[0], tep_loci[1], aaseq[1])
         aaseqs.append(string)
+
+    for cell in list(unpaired_cell.index):
+        cells.append(cell)
+        locus = list(filtered[filtered['CELL'] == cell]['LOCUS'])
+        cdr3 = list(filtered[filtered['CELL'] == cell]['JUNCTION'])
+        seq = Seq(cdr3[0])
+        seq = seq.translate()
+        string = 'IG{}:{}'.format(locus[0], seq)
+        aaseqs.append(string)
+
+    clones['CELLS'] = cells
 
     stat_string_2 = "Paired HK productive reconstruction:\t{}\nPaired HL productive reconstruction:\t{}\n".format(
         paired_k, paired_l
     )
-
-    with open(f'{bracer_outdir}/filtered_BCR_summary/stat.txt', 'w') as s:
-        s.write(stat_string_1)
-        s.write(stat_string_2)
-
 
     clones["aaseq"] = aaseqs
     clone_count = pd.DataFrame(clones['aaseq'].value_counts())
@@ -77,17 +84,29 @@ def filter_by_tpm(bracer_outdir):
         proportation.append(p)
     clone_count['proportation'] = proportation
     clone_count = clone_count.reset_index()
-    clone_count.rename(columns={'index':'aaseq'}, inplace=True)
+    clone_count.rename(columns={'index': 'aaseq'}, inplace=True)
     clone_count.to_csv(f'{bracer_outdir}/filtered_BCR_summary/clone_count.tsv', sep='\t')
+
+    data_10X = pd.read_csv(f'{match_dir}/clonotypes.csv', sep=',')
+    data_10X_top10 = data_10X.head(10)
+    matched_clone = 0
+    for aa in list(data_10X_top10['cdr3s_aa']):
+        if aa in aaseqs:
+            matched_clone += 1
+    stat_string_3 = 'matched clones: {}'.format(matched_clone)
+    with open(f'{bracer_outdir}/filtered_BCR_summary/stat.txt', 'w') as s:
+        s.write(stat_string_1)
+        s.write(stat_string_2)
+        s.write(stat_string_3)
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--bracer_outdir", help='bracer summarize output dir', required=True)
+    parser.add_argument('--match_dir', help='10X outdir', required=True)
     args = parser.parse_args()
-    filter_by_tpm(args.bracer_outdir)
+    filter_by_tpm(args.bracer_outdir, args.match_dir)
 
 
 if __name__ == "__main__":
     main()
-
