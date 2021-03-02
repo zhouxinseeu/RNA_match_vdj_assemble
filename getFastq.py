@@ -6,7 +6,7 @@ import argparse
 import datetime
 
 
-def get_fastq_to_assemble(fqfile, fastq_dir, sample, reversed, bclist=None, topn=None):
+def get_fastq_to_assemble(fqfile, sample, reversed, bclist=None, topn=None):
     barcode_reads_dict = defaultdict(list)  # all barcodes from BCR fqfile paired with reads
     reads_count_dict = {}  # all barcodes and reads num for each barcode
     all_barcodes = []  # all barcodes
@@ -61,11 +61,11 @@ def get_fastq_to_assemble(fqfile, fastq_dir, sample, reversed, bclist=None, topn
         else:
             barcode_reads_useful = barcode_reads_dict
 
-    if not os.path.exists(f'{sample}/{fastq_dir}'):
-        os.mkdir(f'{sample}/{fastq_dir}')
+    if not os.path.exists(f'{sample}/fastq'):
+        os.mkdir(f'{sample}/fastq')
     i = 1
     for barcode in list(barcode_reads_useful.keys()):
-        fastq_file = f'{sample}/{fastq_dir}/{i}.fq'
+        fastq_file = f'{sample}/fastq/{i}.fq'
         with open(fastq_file, 'w') as f:
             for entry in barcode_reads_useful[barcode]:
                 f.write(str(entry) + '\n')
@@ -75,7 +75,6 @@ def get_fastq_to_assemble(fqfile, fastq_dir, sample, reversed, bclist=None, topn
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--fqfile', help='BCR fastq file', required=True)
-    parser.add_argument('--fastq_dir', help='single cell fastq dir', required=True)
     parser.add_argument('--reversed', help='whether barcode in BCR reversed and complement',
                         choices=['True', 'False'], default='True')
     parser.add_argument('--bclist', help='barcode list to match', default='None')
