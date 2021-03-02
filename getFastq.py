@@ -62,7 +62,7 @@ def get_fastq_to_assemble(fqfile, sample, reversed, bclist=None, topn=None):
             barcode_reads_useful = barcode_reads_dict
 
     if not os.path.exists(f'{sample}/fastq'):
-        os.mkdir(f'{sample}/fastq')
+        os.mkdirs(f'{sample}/fastq')
     i = 1
     for barcode in list(barcode_reads_useful.keys()):
         fastq_file = f'{sample}/fastq/{i}.fq'
