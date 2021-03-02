@@ -6,7 +6,7 @@ import argparse
 import datetime
 
 
-def get_fastq_to_assemble(fqfile, sample, reversed, bclist=None, topn=None):
+def get_fastq_to_assemble(fqfile, outdir, sample, reversed, bclist=None, topn=None):
     barcode_reads_dict = defaultdict(list)  # all barcodes from BCR fqfile paired with reads
     reads_count_dict = {}  # all barcodes and reads num for each barcode
     all_barcodes = []  # all barcodes
@@ -61,15 +61,16 @@ def get_fastq_to_assemble(fqfile, sample, reversed, bclist=None, topn=None):
         else:
             barcode_reads_useful = barcode_reads_dict
 
-    if not os.path.exists(f'{sample}/fastq'):
-        os.makedirs(f'{sample}/fastq')
+    if not os.path.exists(f'{outdir}/{sample}/fastq'):
+        os.makedirs(f'{outdir}/{sample}/fastq')
     i = 1
     for barcode in list(barcode_reads_useful.keys()):
-        fastq_file = f'{sample}/fastq/{i}.fq'
+        fastq_file = f'{outdir}/{sample}/fastq/{i}.fq'
         with open(fastq_file, 'w') as f:
             for entry in barcode_reads_useful[barcode]:
                 f.write(str(entry) + '\n')
         i += 1
+    return len(all_barcodes), len(barcode_reads_useful)
 
 
 def main():
@@ -80,12 +81,17 @@ def main():
     parser.add_argument('--bclist', help='barcode list to match', default='None')
     parser.add_argument('--topn', help='select topn cells to assemble', default='None')
     parser.add_argument('--sample', help='sample name', required=True)
+    parser.add_argument('--outdir', help='output dir', required=True)
     args = parser.parse_args()
     start_time = datetime.datetime.now()
-    get_fastq_to_assemble(args.fqfile, args.sample, args.reversed, args.bclist, args.topn)
+    vj_cells, matched_cells = get_fastq_to_assemble(args.fqfile, args.outdir, args.sample, args.reversed, args.bclist,
+                                                    args.topn)
     end_time = datetime.datetime.now()
-    time_report = 'generate_fq_file--start_at_{}--end_at_{}'.format(start_time, end_time)
-    print(time_report)
+    time_report = 'generate_fq_file--start_at_{}--end_at_{}\n'.format(start_time, end_time)
+    stat_string = 'BCR cells:{}\nmatched cell:{}'.format(vj_cells, matched_cells)
+    with open(f'{args.outdir}/{args.sample}/stat.txt', 'w') as s:
+        s.write(time_report)
+        s.write(stat_string)
 
 
 if __name__ == "__main__":
