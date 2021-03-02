@@ -82,7 +82,7 @@ def main():
     parser.add_argument('--sample', help='sample name', required=True)
     args = parser.parse_args()
     start_time = datetime.datetime.now()
-    get_fastq_to_assemble(args.fqfile, args.fastq_dir, args.sample, args.reversed, args.bclist, args.topn)
+    get_fastq_to_assemble(args.fqfile, args.sample, args.reversed, args.bclist, args.topn)
     end_time = datetime.datetime.now()
     time_report = 'generate_fq_file--start_at_{}--end_at_{}'.format(start_time, end_time)
     print(time_report)
