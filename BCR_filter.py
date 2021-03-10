@@ -90,14 +90,20 @@ def filter_by_tpm(bracer_outdir, match_dir):
     data_10X = pd.read_csv(f'{match_dir}/clonotypes.csv', sep=',')
     data_10X_top10 = data_10X.head(10)
     matched_clone = 0
+    matched_aa = []
     for aa in list(data_10X_top10['cdr3s_aa']):
         if aa in aaseqs:
             matched_clone += 1
-    stat_string_3 = 'matched clones: {}'.format(matched_clone)
+            matched_aa.append(aa)
+    stat_string_3 = 'matched clones: {}\n'.format(matched_clone)
+
     with open(f'{bracer_outdir}/filtered_BCR_summary/stat.txt', 'w') as s:
         s.write(stat_string_1)
         s.write(stat_string_2)
         s.write(stat_string_3)
+        for aa in matched_aa:
+            aa = aa + '\n'
+            s.write(aa)
 
 
 def main():
